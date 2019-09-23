@@ -174,7 +174,7 @@ def td3(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        # pi, q1, q2, q1_pi = 
+        pi, q1, q2, q1_pi = actor_critic(x_ph, a_ph, **ac_kwargs)
         pass
     
     # Target policy network
@@ -184,7 +184,7 @@ def td3(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        # pi_targ =
+        pi_targ,_,_,_,_ = actor_critic(x2_ph, a_ph, **ac_kwargs)
         pass
     
     # Target Q networks
@@ -203,6 +203,12 @@ def td3(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         #   YOUR CODE HERE    #
         #                     #
         #######################
+        epsilon = tf.random_normal(tf.shape(x_ph), stddev=act_noise)
+        epsilon = tf.clip_by_value(epsilon, -noise_clip, noise_clip)
+        a2 = pi_targ + epsilon
+        a2 = tf.clip_by_value(a2, -act_limit, act_limit)
+        _, q1, q2, _ = actor_critic(x2_ph, a2, **act_kwargs)
+        
         pass
 
     # Experience buffer
