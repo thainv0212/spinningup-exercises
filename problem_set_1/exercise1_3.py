@@ -184,7 +184,7 @@ def td3(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        pi_targ,_,_,_,_ = actor_critic(x2_ph, a_ph, **ac_kwargs)
+        pi_targ,_,_,_ = actor_critic(x2_ph, a_ph, **ac_kwargs)
         pass
     
     # Target Q networks
@@ -196,18 +196,17 @@ def td3(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         #   YOUR CODE HERE    #
         #                     #
         #######################
-
         # Target Q-values, using action from smoothed target policy
         #######################
         #                     #
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        epsilon = tf.random_normal(tf.shape(x_ph), stddev=act_noise)
+        epsilon = tf.random_normal(tf.shape(pi_targ), stddev=act_noise)
         epsilon = tf.clip_by_value(epsilon, -noise_clip, noise_clip)
         a2 = pi_targ + epsilon
         a2 = tf.clip_by_value(a2, -act_limit, act_limit)
-        _, q1, q2, _ = actor_critic(x2_ph, a2, **act_kwargs)
+        _, q1_tar, q2_tar, _ = actor_critic(x2_ph, a2, **ac_kwargs)
         
         pass
 
@@ -235,7 +234,12 @@ def td3(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     # q1_loss = 
     # q2_loss = 
     # q_loss = 
-
+    min_q_targ = tf.minimum(q1_tar, q2_tar)
+    backup = tf.stop_gradient(r_ph + gamma * (1 - d_ph) * min_q_targ)
+    pi_loss = tf.reduce_mean(q1_pi)
+    q1_loss = tf.reduce_mean((q1 - backup) ** 2)
+    q2_loss = tf.reduce_mean((q2 - backup) ** 2)
+    q_loss = q1_loss + q2_loss
     #=========================================================================#
     #                                                                         #
     #           All of your code goes in the space above.                     #
